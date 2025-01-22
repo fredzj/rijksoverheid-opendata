@@ -17,9 +17,13 @@
 	setlocale(LC_ALL,			'nl_NL.utf8');
 	$time_start				=	microtime(true);
 	$server_domains_root	=	substr(__DIR__, 0, mb_strrpos(__DIR__, '/'));
+	$server_domains_root	=	substr($server_domains_root, 0, mb_strrpos($server_domains_root, '/'));
+	$server_domains_root	=	substr($server_domains_root, 0, mb_strrpos($server_domains_root, '/'));
 
 	# Parse the DB configuration file
 	$config_file_name_db	=	$server_domains_root . '/config/db.ini';
 	if (($dbconfig			=	parse_ini_file($config_file_name_db,	FALSE, INI_SCANNER_TYPED)) === FALSE) {
 		throw new Exception("Parsing file " . $config_file_name_db	. " FAILED");
 	}
+	
+	$output_data_lines		=	0;

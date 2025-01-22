@@ -254,5 +254,4 @@ try {
 	###
 
 	require 'includes/exit.inc.php';
-
 }
