@@ -1,25 +1,52 @@
 ﻿<?php
-/*
-
-	SCRIPT:		downloadTravelAdvice.php
-	
-	PURPOSE:	Download API V2 traveladvice in XML feeds from the Dutch government and insert the data into the database.
-	
-	Copyright 2024 Fred Onis - All rights reserved.
-	
-	download_map
-	process_one_country
-	process_bulk_countries
-
-*/
+/**
+ * SCRIPT: downloadTravelAdvice.php
+ * PURPOSE: Download API V2 travel advice in XML feeds from the Dutch government and insert the data into the database.
+ *
+ * This script performs the following tasks:
+ * - Downloads travel advice data in XML format from the Dutch government API.
+ * - Processes the XML data and extracts relevant information.
+ * - Inserts the extracted data into the database.
+ * - Downloads and processes images associated with the travel advice.
+ *
+ * @package rijksoverheid-opendata
+ * @version 1.0.0
+ * @since 2024
+ * @license MIT
+ *
+ * COPYRIGHT: 2024 Fred Onis - All rights reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ * @author Fred Onis
+ */
 
 /**
  * Create images in two sizes and three formats for the travel advice map and save these locally.
  *
- * @param	string	$filename			Filename of the image.
- * @param	string	$fileurl			URL of the image.
+ * This function downloads an image from the given URL, creates a large and a small version of the image,
+ * and saves them in PNG, JPEG, and WebP formats in the specified directory.
  *
- * @return	void
+ * @param string $filename The filename of the image.
+ * @param string $fileurl  The URL of the image.
+ *
+ * @return void
  */
 function download_map($filename, $fileurl) {
 	
@@ -50,18 +77,20 @@ function download_map($filename, $fileurl) {
 		imagedestroy($image_large);
 		imagedestroy($image_small);
 	}
-
-	return;
 }
 
 /**
- * Save all country-level traveladvice content to the database.
+ * Save all country-level travel advice content to the database.
  *
- * @param	object	$dbh				PDO instance representing a connection to a database.
- * @param	string	$file_contents		Contents of the country-level XML file.
- * @param	string	$output_data_lines	Number of countries processed.
+ * This function processes the XML data for a single country, extracts relevant information,
+ * and inserts the data into the database. It also downloads and processes images associated
+ * with the travel advice.
  *
- * @return	void
+ * @param PDO    $dbh              PDO instance representing a connection to a database.
+ * @param string $file_contents    Contents of the country-level XML file.
+ * @param int    &$output_data_lines Number of countries processed (passed by reference).
+ *
+ * @return void
  */
 function process_one_country($dbh, $file_contents, &$output_data_lines) {
 	
@@ -74,7 +103,7 @@ function process_one_country($dbh, $file_contents, &$output_data_lines) {
 	$output_values_tacb				=	[];
 	$output_values_taf				=	[];
 
-	$document	=	simplexml_load_string($file_contents);
+	$document = simplexml_load_string($file_contents);
 	
 	echo date("[G:i:s] ") . '-- Reading XML Feed ' . $document->travelAdvice . PHP_EOL;
 	if (($contents = @file_get_contents($document->travelAdvice)) !== false) {
@@ -146,13 +175,16 @@ function process_one_country($dbh, $file_contents, &$output_data_lines) {
 }
 
 /**
- * Save all country-level traveladvice content to the database.
+ * Save all bulk-level travel advice content to the database.
  *
- * @param	object	$dbh				PDO instance representing a connection to a database.
- * @param	string	$file_contents		Contents of the bulk-level XML file.
- * @param	string	$output_data_lines	Number of countries processed.
+ * This function processes the bulk-level XML data, extracts relevant information for each country,
+ * and inserts the data into the database.
  *
- * @return	void
+ * @param PDO    $dbh              PDO instance representing a connection to a database.
+ * @param string $file_contents    Contents of the bulk-level XML file.
+ * @param int    &$output_data_lines Number of countries processed (passed by reference).
+ *
+ * @return void
  */
 function process_bulk_countries($dbh, $file_contents, &$output_data_lines) {
 
@@ -171,9 +203,9 @@ function process_bulk_countries($dbh, $file_contents, &$output_data_lines) {
 }
 
 /**
- * Download traeladvice and save to the database.
+ * Download traveladvice and save to the database.
  *
- * @param	object	$dbh				PDO instance representing a connection to a database.
+ * @param	PDO		$dbh				PDO instance representing a connection to a database.
  * @param	array	$product			Array structure containing product-level data.
  * @param	array	$properties			Array structure containing property-level data.
  * @param	array	$regions			Array structure containing regions.
@@ -216,9 +248,7 @@ try {
 
 	for ($offset = OPENDATA_OFFSET; $offset < 400; $offset += OPENDATA_ROWS) {
 
-		$nextURL	=	OPENDATA_URL;
-		$nextURL	=	str_replace('{{OFFSET}}',	$offset,		$nextURL);
-		$nextURL	=	str_replace('{{ROWS}}',		OPENDATA_ROWS,	$nextURL);
+        $nextURL = str_replace(['{{OFFSET}}', '{{ROWS}}'], [$offset, OPENDATA_ROWS], OPENDATA_URL);
 
 		echo date("[G:i:s] ") . 'Reading XML Feed ' . $nextURL . PHP_EOL;
 		if (($file_contents = file_get_contents($nextURL)) !== false) {
@@ -240,13 +270,9 @@ try {
 	###
 
 } catch (PDOException $e) {
-	
 	echo date("[G:i:s] ") . 'Caught PDOException: ' . $e->getMessage() . PHP_EOL;
-	
 } catch (Exception $e) {
-	
 	echo date("[G:i:s] ") . 'Caught Exception: '    . $e->getMessage() . PHP_EOL;
-	
 } finally {
 
 	###

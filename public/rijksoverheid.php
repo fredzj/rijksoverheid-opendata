@@ -194,9 +194,7 @@ try {
 	###
 	
 	$html_traveladvice	=	get_html_traveladvice(	$dbh);
-			
 	$html_contentblocks	=	get_html_contentblocks(	$dbh);
-		
 	$html_files			=	get_html_files(			$dbh);
 
 	###
