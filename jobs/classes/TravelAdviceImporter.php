@@ -1,10 +1,45 @@
 <?php
+/**
+ * Class TravelAdviceImporter
+ * 
+ * This class is responsible for downloading travel advice data from a specified URL,
+ * processing the XML data, and inserting it into the appropriate database tables.
+ * It ensures that the database is updated with the latest travel advice information.
+ *
+ * @package rijksoverheid-opendata
+ * @version 1.0.0
+ * @since 2024
+ * @license MIT
+ *
+ * COPYRIGHT: 2024 Fred Onis - All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ * @author Fred Onis
+ */
 class TravelAdviceImporter {
     private $db;
     private $url;
     private $outputColumns;
     private $outputValues;
     private $outputDataLines = 0;
+    private $timeStart;
 
     /**
      * TravelAdviceImporter constructor.
@@ -16,6 +51,7 @@ class TravelAdviceImporter {
 		$this->db  = $db;
         $this->url = $url;
         $this->initializeOutputColumns();
+        $this->registerExitHandler();
     }
 
     /**
@@ -30,11 +66,24 @@ class TravelAdviceImporter {
     }
 
     /**
+     * Register the exit handler.
+     *
+     * @return void
+     */
+    private function registerExitHandler() {
+        $this->timeStart = microtime(true);
+        register_shutdown_function([new ExitHandler($this->timeStart), 'handleExit']);
+    }
+
+    /**
      * Download travel advice and save to the database.
      *
      * @return void
      */
     public function import() {
+        define("OPENDATA_OFFSET", 0);
+        define("OPENDATA_ROWS", 200);
+
         $this->truncateTables();
 
         for ($offset = OPENDATA_OFFSET; $offset < 400; $offset += OPENDATA_ROWS) {
@@ -155,20 +204,23 @@ class TravelAdviceImporter {
         if (!$image) {
             echo date("[G:i:s] ") . "Warning: imagecreatefrompng(): '$fileurl' is not a valid PNG file" . PHP_EOL;
         } else {
+            $path = substr(__DIR__, 0, mb_strrpos(__DIR__, '/'));
+            $path = substr($path, 0, mb_strrpos($path, '/')) . '/public_html/assets/img/';
+
             $image_large = imagescale($image, 468);
 
-            imagepng($image_large, WEBROOT . '/assets/img/' . str_replace('.png', '.png', $filename));
-            imagejpeg($image_large, WEBROOT . '/assets/img/' . str_replace('.png', '.jpg', $filename));
-            imagewebp($image_large, WEBROOT . '/assets/img/' . str_replace('.png', '.webp', $filename));
+            imagepng($image_large, $path . str_replace('.png', '.png', $filename));
+            imagejpeg($image_large, $path . str_replace('.png', '.jpg', $filename));
+            imagewebp($image_large, $path . str_replace('.png', '.webp', $filename));
 
             $image_small = imagecreatetruecolor(306, 210);
-            list($width, $height) = getimagesize(WEBROOT . '/assets/img/' . $filename);
+            list($width, $height) = getimagesize($path . $filename);
             $height = 620 * ($width / 903);
             imagecopyresampled($image_small, $image_large, 0, 0, 0, 0, 306, 210, $width, $height);
 
-            imagepng($image_small, WEBROOT . '/assets/img/' . str_replace('.png', '_small.png', $filename));
-            imagejpeg($image_small, WEBROOT . '/assets/img/' . str_replace('.png', '_small.jpg', $filename));
-            imagewebp($image_small, WEBROOT . '/assets/img/' . str_replace('.png', '_small.webp', $filename));
+            imagepng($image_small, $path . str_replace('.png', '_small.png', $filename));
+            imagejpeg($image_small, $path . str_replace('.png', '_small.jpg', $filename));
+            imagewebp($image_small, $path . str_replace('.png', '_small.webp', $filename));
 
             imagedestroy($image);
             imagedestroy($image_large);
