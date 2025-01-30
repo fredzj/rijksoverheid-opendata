@@ -28,6 +28,7 @@ class TravelAdviceImporter {
             'traveladvice_files'         => ['id', 'fileurl', 'mimetype', 'filesize', 'filename', 'filetitle', 'filedescription', 'filemodifieddate', 'maptype']
         ];
     }
+
     /**
      * Download travel advice and save to the database.
      *
