@@ -35,7 +35,8 @@
  */
 class TravelAdviceImporter {
     private $db;
-    private $url;
+	private $dbConfigPath;
+    private $inputUrl;
     private $outputColumns;
     private $outputValues;
     private $outputDataLines = 0;
@@ -47,11 +48,12 @@ class TravelAdviceImporter {
      * @param Database $db The database connection object.
      * @param string $url The URL to fetch XML data from.
      */
-    public function __construct($db, $url) {
-		$this->db  = $db;
-        $this->url = $url;
+    public function __construct($dbConfigPath, $inputUrl) {
+		$this->dbConfigPath = $dbConfigPath;
+        $this->inputUrl = $inputUrl;
         $this->initializeOutputColumns();
         $this->registerExitHandler();
+		$this->connectDatabase();
     }
 
     /**
@@ -75,6 +77,24 @@ class TravelAdviceImporter {
         register_shutdown_function([new ExitHandler($this->timeStart), 'handleExit']);
     }
 
+	/**
+	 * Connects to the database using the configuration file.
+	 *
+	 * This method reads the database configuration from the specified INI file,
+	 * parses the configuration, and establishes a connection to the database.
+	 * If the configuration file cannot be parsed, an exception is thrown.
+	 *
+	 * @throws Exception If the configuration file cannot be parsed.
+	 * @return void
+	 */
+	private function connectDatabase() {
+		if (($dbConfig = parse_ini_file($this->dbConfigPath, FALSE, INI_SCANNER_TYPED)) === FALSE) {
+			throw new Exception("Parsing file " . $this->dbConfigPath	. " FAILED");
+		}
+		$this->db = new Database($dbConfig);
+		unset($dbConfig);
+	}
+
     /**
      * Download travel advice and save to the database.
      *
@@ -87,7 +107,7 @@ class TravelAdviceImporter {
         $this->truncateTables();
 
         for ($offset = OPENDATA_OFFSET; $offset < 400; $offset += OPENDATA_ROWS) {
-            $nextURL = str_replace(['{{OFFSET}}', '{{ROWS}}'], [$offset, OPENDATA_ROWS], $this->url);
+            $nextURL = str_replace(['{{OFFSET}}', '{{ROWS}}'], [$offset, OPENDATA_ROWS], $this->inputUrl);
 
             echo date("[G:i:s] ") . 'Reading XML Feed ' . $nextURL . PHP_EOL;
             if (($file_contents = file_get_contents($nextURL)) !== false) {
