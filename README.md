@@ -7,7 +7,7 @@ This project allows you to download and view travel advice data from the Governm
 - PHP installed on the server
 - MySQL or MariaDB database
 
-## Save Database Credentials
+## 1. Save Database Credentials
 Create a file `/config/db.ini` and enter your database credentials in the following format:
 ```ini
 hostname=your_hostname
@@ -21,14 +21,15 @@ Import all SQL files from the database directory into your database:
 ```sh
 mysql -u your_username -p your_databasename < /path/to/database/file.sql
 ```
-## Transfer Files
-3. Transfer all files to your server.  
+## 3. Transfer Files
+Transfer all files to your server.  
 
-## Import Travel Advice Data
-4. Schedule `importTravelAdvice.php` in order to import Travel Advice data from the Government of the Netherlands and save it into your database. You can use a cron job for this:
-   ```sh
-   # Example cron job to run the script daily at midnight
-   0 0 * * * /usr/bin/php /path/to/importTravelAdvice.php
+## 4. Import Travel Advice Data
+Schedule `importTravelAdvice.php` in order to import Travel Advice data from the Government of the Netherlands and save it into your database. You can use a cron job for this:
+```sh
+# Example cron job to run the script daily at midnight
+0 0 * * * /usr/bin/php /path/to/importTravelAdvice.php
+```
 
 ## View Travel Advice Dashboard
 5. Open `rijksoverheid.php` in your browser.
