@@ -31,5 +31,5 @@ Schedule `importTravelAdvice.php` in order to import Travel Advice data from the
 0 0 * * * /usr/bin/php /path/to/importTravelAdvice.php
 ```
 
-## View Travel Advice Dashboard
-5. Open `rijksoverheid.php` in your browser.
+## 5. View Travel Advice Dashboard
+Open `rijksoverheid.php` in your browser.
