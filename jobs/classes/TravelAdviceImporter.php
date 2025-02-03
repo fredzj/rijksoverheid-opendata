@@ -37,6 +37,7 @@ class TravelAdviceImporter {
     private $db;
 	private $dbConfigPath;
     private $inputUrl;
+    private $log;
     private $outputColumns;
     private $outputValues;
     private $outputDataLines = 0;
@@ -51,6 +52,7 @@ class TravelAdviceImporter {
     public function __construct($dbConfigPath, $inputUrl) {
 		$this->dbConfigPath = $dbConfigPath;
         $this->inputUrl = $inputUrl;
+        $this->log = new Log();
         $this->initializeOutputColumns();
         $this->registerExitHandler();
 		$this->connectDatabase();
@@ -92,7 +94,6 @@ class TravelAdviceImporter {
 			throw new Exception("Parsing file " . $this->dbConfigPath	. " FAILED");
 		}
 		$this->db = new Database($dbConfig);
-		unset($dbConfig);
 	}
 
     /**
@@ -109,13 +110,13 @@ class TravelAdviceImporter {
         for ($offset = OPENDATA_OFFSET; $offset < 400; $offset += OPENDATA_ROWS) {
             $nextURL = str_replace(['{{OFFSET}}', '{{ROWS}}'], [$offset, OPENDATA_ROWS], $this->inputUrl);
 
-            echo date("[G:i:s] ") . 'Reading XML Feed ' . $nextURL . PHP_EOL;
+            $this->log->info('Reading XML Feed ' . $nextUrl);
             if (($file_contents = file_get_contents($nextURL)) !== false) {
                 $this->process_bulk_countries($file_contents);
             }
         }
 
-        echo date("[G:i:s] ") . '- ' . $this->outputDataLines . ' rows processed' . PHP_EOL;
+        $this->log->info('- ' . $this->outputDataLines . ' rows processed');
     }
 
     /**
@@ -129,7 +130,7 @@ class TravelAdviceImporter {
         $documents = simplexml_load_string($file_contents);
 
         foreach ($documents->document as $document) {
-            echo date("[G:i:s] ") . '- Reading XML Feed ' . $document->dataurl . PHP_EOL;
+            $this->log->info('- Reading XML Feed ' . $document->dataurl);
             if (($file_contents = file_get_contents($document->dataurl)) !== false) {
                 $this->process_one_country($file_contents);
             }
@@ -148,7 +149,7 @@ class TravelAdviceImporter {
 
         $document = simplexml_load_string($file_contents);
 
-        echo date("[G:i:s] ") . '-- Reading XML Feed ' . $document->travelAdvice . PHP_EOL;
+        $this->log->info('-- Reading XML Feed ' . $document->travelAdvice);
         if (($contents = @file_get_contents($document->travelAdvice)) !== false) {
             $reisadvies = simplexml_load_string($contents);
 
@@ -206,7 +207,7 @@ class TravelAdviceImporter {
                 $this->download_map($file->filename, $file->fileurl);
             }
         } else {
-            echo date("[G:i:s] ") . '--- WARNING: file_get_contents FAILED' . PHP_EOL;
+            $this->log->error('--- file_get_contents FAILED');
         }
     }
 
@@ -222,7 +223,7 @@ class TravelAdviceImporter {
         $image = @imagecreatefrompng($fileurl);
 
         if (!$image) {
-            echo date("[G:i:s] ") . "Warning: imagecreatefrompng(): '$fileurl' is not a valid PNG file" . PHP_EOL;
+            $this->log->error("imagecreatefrompng(): '$fileurl' is not a valid PNG file");
         } else {
             $path = substr(__DIR__, 0, mb_strrpos(__DIR__, '/'));
             $path = substr($path, 0, mb_strrpos($path, '/')) . '/public_html/assets/img/';
