@@ -60,8 +60,10 @@ class TravelAdviceImporter {
 
     /**
      * Initializes the output columns for the database tables.
+     *
+     * @return void
      */
-    private function initializeOutputColumns() {
+    private function initializeOutputColumns(): void {
         $this->outputColumns = [
             'traveladvice'               => ['id', 'type', 'canonical', 'dataurl', 'title', 'introduction', 'location', 'modificationdate', 'modifications', 'authorities', 'creators', 'lastmodified', 'issued', 'available', 'license', 'rightsholders', 'language'],
             'traveladvice_contentblocks' => ['id', 'paragraph', 'paragraphtitle', 'sequence'],
@@ -74,7 +76,7 @@ class TravelAdviceImporter {
      *
      * @return void
      */
-    private function registerExitHandler() {
+    private function registerExitHandler(): void {
         $this->timeStart = microtime(true);
         register_shutdown_function([new ExitHandler($this->timeStart), 'handleExit']);
     }
@@ -89,7 +91,7 @@ class TravelAdviceImporter {
 	 * @throws Exception If the configuration file cannot be parsed.
 	 * @return void
 	 */
-	private function connectDatabase() {
+	private function connectDatabase(): void {
 		if (($dbConfig = parse_ini_file($this->dbConfigPath, FALSE, INI_SCANNER_TYPED)) === FALSE) {
 			throw new Exception("Parsing file " . $this->dbConfigPath	. " FAILED");
 		}
@@ -101,17 +103,17 @@ class TravelAdviceImporter {
      *
      * @return void
      */
-    public function import() {
+    public function import(): void {
         define("OPENDATA_OFFSET", 0);
         define("OPENDATA_ROWS", 200);
 
         $this->truncateTables();
 
         for ($offset = OPENDATA_OFFSET; $offset < 400; $offset += OPENDATA_ROWS) {
-            $nextURL = str_replace(['{{OFFSET}}', '{{ROWS}}'], [$offset, OPENDATA_ROWS], $this->inputUrl);
+            $nextUrl = str_replace(['{{OFFSET}}', '{{ROWS}}'], [$offset, OPENDATA_ROWS], $this->inputUrl);
 
             $this->log->info('Reading XML Feed ' . $nextUrl);
-            if (($file_contents = file_get_contents($nextURL)) !== false) {
+            if (($file_contents = file_get_contents($nextUrl)) !== false) {
                 $this->process_bulk_countries($file_contents);
             }
         }
@@ -126,7 +128,7 @@ class TravelAdviceImporter {
      *
      * @return void
      */
-    private function process_bulk_countries($file_contents) {
+    private function process_bulk_countries(string $file_contents): void {
         $documents = simplexml_load_string($file_contents);
 
         foreach ($documents->document as $document) {
@@ -144,7 +146,7 @@ class TravelAdviceImporter {
      *
      * @return void
      */
-    private function process_one_country($file_contents) {
+    private function process_one_country(string $file_contents): void {
         sleep(1);
 
         $document = simplexml_load_string($file_contents);
@@ -219,7 +221,7 @@ class TravelAdviceImporter {
      *
      * @return void
      */
-    private function download_map($filename, $fileurl) {
+    private function download_map(string $filename, string $fileurl): void {
         $image = @imagecreatefrompng($fileurl);
 
         if (!$image) {
@@ -252,7 +254,7 @@ class TravelAdviceImporter {
     /**
      * Truncates the relevant database tables.
      */
-    private function truncateTables() {
+    private function truncateTables(): void {
         foreach ($this->outputColumns as $table => $columns) {
 			$this->db->truncate('vendor_rijksoverheid_nl_' . $table);
         }
