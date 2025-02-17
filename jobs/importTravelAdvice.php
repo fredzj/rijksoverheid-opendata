@@ -37,6 +37,9 @@
 require 'classes/Database.php';
 require 'classes/ExitHandler.php';
 require 'classes/Log.php';
+require 'classes/TravelAdvice.php';
+require 'classes/TravelAdviceContentBlock.php';
+require 'classes/TravelAdviceFile.php';
 require 'classes/TravelAdviceImporter.php';
 
 // Set defaults

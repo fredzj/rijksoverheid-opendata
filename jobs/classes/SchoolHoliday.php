@@ -1,9 +1,10 @@
 <?php
 class SchoolHoliday {
-    private $compulsoryDates;
     private $db;
-    private $endDate;
     private $outputColumns;
+
+    private $compulsoryDates;
+    private $endDate;
     private $region;
     private $schoolYear;
     private $startDate;

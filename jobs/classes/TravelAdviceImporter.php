@@ -38,7 +38,6 @@ class TravelAdviceImporter {
 	private $dbConfigPath;
     private $inputUrl;
     private $log;
-    private $outputColumns;
     private $outputValues;
     private $outputDataLines = 0;
     private $timeStart;
@@ -53,22 +52,8 @@ class TravelAdviceImporter {
 		$this->dbConfigPath = $dbConfigPath;
         $this->inputUrl = $inputUrl;
         $this->log = new Log();
-        $this->initializeOutputColumns();
         $this->registerExitHandler();
 		$this->connectDatabase();
-    }
-
-    /**
-     * Initializes the output columns for the database tables.
-     *
-     * @return void
-     */
-    private function initializeOutputColumns(): void {
-        $this->outputColumns = [
-            'traveladvice'               => ['id', 'type', 'canonical', 'dataurl', 'title', 'introduction', 'location', 'modificationdate', 'modifications', 'authorities', 'creators', 'lastmodified', 'issued', 'available', 'license', 'rightsholders', 'language'],
-            'traveladvice_contentblocks' => ['id', 'paragraph', 'paragraphtitle', 'sequence'],
-            'traveladvice_files'         => ['id', 'fileurl', 'mimetype', 'filesize', 'filename', 'filetitle', 'filedescription', 'filemodifieddate', 'maptype']
-        ];
     }
 
     /**
@@ -154,57 +139,51 @@ class TravelAdviceImporter {
         $this->log->info('-- Reading XML Feed ' . $document->travelAdvice);
         if (($contents = @file_get_contents($document->travelAdvice)) !== false) {
             $reisadvies = simplexml_load_string($contents);
-
-            # Collect data for travel advice
-            $this->outputValues['traveladvice'] = [
-                $reisadvies->id,
-                $reisadvies->type,
-                $reisadvies->canonical,
-                $reisadvies->dataurl,
-                addslashes($reisadvies->title),
-                addslashes(preg_replace('/\s+/', ' ', $reisadvies->introduction)),
-                addslashes($reisadvies->location),
-                addslashes($reisadvies->modificationdate),
-                addslashes($reisadvies->modifications),
-                $reisadvies->authorities->department,
-                $reisadvies->creators->department,
-                $reisadvies->lastmodified,
-                $reisadvies->issued,
-                $reisadvies->available,
-                $reisadvies->license,
-                $reisadvies->rightsholders->department,
-                $reisadvies->language
-            ];
-            $this->db->insert('vendor_rijksoverheid_nl_traveladvice', $this->outputColumns['traveladvice'], $this->outputValues['traveladvice']);
+            $travelAdvice = new TravelAdvice($this->db);
+            $travelAdvice->setTravelAdvice( $reisadvies->id, 
+                                            $reisadvies->type, 
+                                            $reisadvies->canonical, 
+                                            $reisadvies->dataurl, 
+                                            $reisadvies->title, 
+                                            preg_replace('/\s+/', ' ', $reisadvies->introduction), 
+                                            $reisadvies->location, 
+                                            $reisadvies->modificationdate, 
+                                            $reisadvies->modifications, 
+                                            $reisadvies->authorities->department, 
+                                            $reisadvies->creators->department, 
+                                            $reisadvies->lastmodified, 
+                                            $reisadvies->issued, 
+                                            $reisadvies->available, 
+                                            $reisadvies->license, 
+                                            $reisadvies->rightsholders->department, 
+                                            $reisadvies->language);
+            $travelAdvice->save();
             $this->outputDataLines++;
 
             # Collect data for travel advice content blocks
             $sequence = 0;
             foreach ($reisadvies->content->category->contentblock as $contentblock) {
-                $this->outputValues['traveladvice_contentblocks'] = [
-                    $reisadvies->id,
-                    addslashes(preg_replace('/\s+/', ' ', $contentblock->paragraph)),
-                    addslashes($contentblock->paragraphtitle),
-                    $sequence++
-                ];
-                $this->db->insert('vendor_rijksoverheid_nl_traveladvice_contentblocks', $this->outputColumns['traveladvice_contentblocks'], $this->outputValues['traveladvice_contentblocks']);
+                $travelAdviceContentBlock = new TravelAdviceContentBlock($this->db);
+                $travelAdviceContentBlock->setTravelAdviceContentBlock( $reisadvies->id, 
+                                                                        preg_replace('/\s+/', ' ', $contentblock->paragraph), 
+                                                                        $contentblock->paragraphtitle, 
+                                                                        $sequence++);
+                $travelAdviceContentBlock->save();
             }
 
             # Collect data for travel advice files
             foreach ($reisadvies->files->file as $file) {
-                $this->outputValues['traveladvice_files'] = [
-                    $reisadvies->id,
-                    addslashes($file->fileurl),
-                    addslashes($file->mimetype),
-                    addslashes($file->filesize),
-                    addslashes($file->filename),
-                    addslashes($file->filetitle),
-                    addslashes($file->filedescription),
-                    addslashes($file->filemodifieddate),
-                    addslashes($file->maptype)
-                ];
-                $this->db->insert('vendor_rijksoverheid_nl_traveladvice_files', $this->outputColumns['traveladvice_files'], $this->outputValues['traveladvice_files']);
-
+                $travelAdviceFile = new TravelAdviceFile($this->db);
+                $travelAdviceFile->setTravelAdviceFile( $reisadvies->id, 
+                                                        $file->fileurl, 
+                                                        $file->mimetype, 
+                                                        $file->filesize, 
+                                                        $file->filename, 
+                                                        $file->filetitle,
+                                                        $file->filedescription,
+                                                        $file->filemodifieddate,
+                                                        $file->maptype);
+                $travelAdviceFile->save();
                 # Download images
                 $this->download_map($file->filename, $file->fileurl);
             }
@@ -255,8 +234,8 @@ class TravelAdviceImporter {
      * Truncates the relevant database tables.
      */
     private function truncateTables(): void {
-        foreach ($this->outputColumns as $table => $columns) {
-			$this->db->truncate('vendor_rijksoverheid_nl_' . $table);
-        }
+		$this->db->truncate('vendor_rijksoverheid_nl_traveladvice');
+		$this->db->truncate('vendor_rijksoverheid_nl_traveladvice_contentblocks');
+		$this->db->truncate('vendor_rijksoverheid_nl_traveladvice_files');
     }
 }
