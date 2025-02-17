@@ -38,8 +38,6 @@ class SchoolHolidayImporter {
 	private $dbConfigPath;
     private $inputUrl;
     private $log;
-    private $outputColumns;
-    private $outputValues;
     private $outputDataLines = 0;
     private $timeStart;
 
@@ -47,24 +45,14 @@ class SchoolHolidayImporter {
      * SchoolHolidayImporter constructor.
      * 
      * @param string $dbConfigPath The path to the database configuration file.
-     * @param string $url The URL to fetch XML data from.
+     * @param string $url          The URL to fetch XML data from.
      */
     public function __construct(string $dbConfigPath, string $inputUrl) {
 		$this->dbConfigPath = $dbConfigPath;
         $this->inputUrl = $inputUrl;
         $this->log = new Log();
-        $this->initializeOutputColumns();
         $this->registerExitHandler();
 		$this->connectDatabase();
-    }
-
-    /**
-     * Initializes the output columns for the database tables.
-     */
-    private function initializeOutputColumns(): void {
-        $this->outputColumns = [
-            'schoolholidays' => ['schoolyear', 'type', 'compulsorydates', 'region', 'startdate', 'enddate']
-        ];
     }
 
     /**
@@ -135,14 +123,14 @@ class SchoolHolidayImporter {
 		    foreach ($document->content->contentblock as $contentblock) {
 		    	foreach ($contentblock->vacations->vacation as $vacation) {
 		    		foreach ($vacation->regions as $regions) {
-    					$outputValues	=	[];
-	    				$outputValues[]	=	trim($contentblock->schoolyear);
-		    			$outputValues[]	=	trim($vacation->type);
-			    		$outputValues[]	=	$vacation->compulsorydates == 'true' ? '1' : '0';
-				    	$outputValues[]	=	$regions->region;
-					    $outputValues[]	=	$regions->startdate;
-    					$outputValues[]	=	$regions->enddate;
-	    				$this->db->insert('vendor_rijksoverheid_nl_schoolholidays', $this->outputColumns['schoolholidays'], $outputValues);
+                        $schoolholiday = new SchoolHoliday($this->db);
+                        $schoolholiday->setSchoolholiday(   trim($contentblock->schoolyear), 
+                                                            trim($vacation->type), 
+                                                            $vacation->compulsorydates == 'true' ? '1' : '0', 
+                                                            $regions->region, 
+                                                            $regions->startdate, 
+                                                            $regions->enddate);
+                        $schoolholiday->save();
 		    			$this->outputDataLines++;
 			    	}
 			    }

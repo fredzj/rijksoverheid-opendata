@@ -38,6 +38,7 @@ require 'classes/Database.php';
 require 'classes/ExitHandler.php';
 require 'classes/Log.php';
 require 'classes/SchoolHolidayImporter.php';
+require 'classes/SchoolHoliday.php';
 
 // Set defaults
 date_default_timezone_set(	'Europe/Amsterdam');
