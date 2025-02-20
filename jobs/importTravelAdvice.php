@@ -34,13 +34,13 @@
  * 
  * @author Fred Onis
  */
-require 'classes/Database.php';
-require 'classes/ExitHandler.php';
-require 'classes/Log.php';
-require 'classes/TravelAdvice.php';
-require 'classes/TravelAdviceContentBlock.php';
-require 'classes/TravelAdviceFile.php';
-require 'classes/TravelAdviceImporter.php';
+require __DIR__ . '/classes/Database.php';
+require __DIR__ . '/classes/ExitHandler.php';
+require __DIR__ . '/classes/Log.php';
+require __DIR__ . '/classes/TravelAdvice.php';
+require __DIR__ . '/classes/TravelAdviceContentBlock.php';
+require __DIR__ . '/classes/TravelAdviceFile.php';
+require __DIR__ . '/classes/TravelAdviceImporter.php';
 
 // Set defaults
 date_default_timezone_set(	'Europe/Amsterdam');
