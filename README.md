@@ -41,4 +41,4 @@ Schedule `importTravelAdvice.php` in order to import Travel Advice data from the
 ## 6. View Dashboard
 Open `rijksoverheid.php` in your browser.
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/fredzj/rijksoverheid-opendata/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/fredzj/rijksoverheid-opendata/badge)](https://scorecard.dev/viewer/?uri=github.com/fredzj/rijksoverheid-opendata)
